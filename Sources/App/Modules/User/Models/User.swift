@@ -16,6 +16,9 @@ final class User: Model {
     @Field(key: "password")
     var password: String
 
+    @Parent(key: "role_id")
+    var role: Role
+
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
     @Parent(key: "created_by_id")
@@ -43,11 +46,19 @@ final class User: Model {
 
     init() {}
 
-    init(id: UUID? = nil, name: String, email: String, password: String) {
+    init(id: UUID? = nil, name: String, email: String, password: String, role: Role) {
         self.id = id
         self.name = name
         self.email = email
         self.password = password
+        self.$role.id = role.id!
+    }
+
+    func exists(on db: Database) async throws -> Bool {
+        try await User.query(on: db)
+            .field(\.$id)
+            .filter(\.$name == name)
+            .count() > 0
     }
 
     func create(on db: Database, by: User) async throws {
@@ -75,7 +86,9 @@ final class User: Model {
 
     static func system(on db: Database) async throws -> Self {
         try await query(on: db)
+            .join(Role.self, on: \User.$role.$id == \Role.$id)
             .filter(User.self, \.$name == "system")
+            .filter(Role.self, \.$name == "system")
             .first()!
     }
 }

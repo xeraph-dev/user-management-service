@@ -17,10 +17,14 @@ public func configure(_ app: Application) async throws {
     )), as: .psql)
 
     app.migrations.add(User.CreateMigration())
+    app.migrations.add(Role.CreateMigration())
 
     try await app.autoMigrate()
 
     app.views.use(.leaf)
 
-    try routes(app)
+    let api = app.routes.grouped("api")
+    let v1 = api.grouped("v1")
+    try v1.register(collection: User.Controller())
+    try v1.register(collection: Role.Controller())
 }

@@ -6,13 +6,17 @@ extension User {
         var email: String
         var password: String
         var confirmPassword: String
+        var roleId: UUID
 
         func user() throws -> User {
-            let user = User()
-            user.name = name
-            user.email = email
-            user.password = try Bcrypt.hash(password)
-            return user
+            let role = Role()
+            role.id = roleId
+            return try User(
+                name: name,
+                email: email,
+                password: Bcrypt.hash(password),
+                role: role
+            )
         }
     }
 }
@@ -23,5 +27,6 @@ extension User.Create: Validatable {
         validations.add("email", as: String.self, is: .email)
         validations.add("password", as: String.self, is: .count(8...))
         validations.add("confirmPassword", as: String.self, is: !.empty)
+        validations.add("roleId", as: UUID.self)
     }
 }

@@ -32,19 +32,27 @@ extension User {
             }
 
             let user = try create.user()
+            if try await user.exists(on: req.db) {
+                throw Abort(.conflict, reason: "user already exists")
+            }
             try await user.create(on: req.db, by: User.system(on: req.db))
             return try user.response()
         }
 
         func show(req: Request) async throws -> User.Response {
-            return try await User.find(req.parameters.get("id"), on: req.db)!.response()
+            try await User.find(req.parameters.get("id"), on: req.db)!.response()
         }
 
         func update(req: Request) async throws -> HTTPStatus {
             try User.Update.validate(content: req)
+
+            let update = try req.content.decode(User.Update.self)
+            guard update.password == update.confirmPassword else {
+                throw Abort(.badRequest, reason: "passwords did not match")
+            }
+
             try await User.find(req.parameters.get("id"), on: req.db)!
-                .update(on: req.db, by: User.system(on: req.db),
-                        update: req.content.decode(User.Update.self))
+                .update(on: req.db, by: User.system(on: req.db), update: update)
             return .noContent
         }
 

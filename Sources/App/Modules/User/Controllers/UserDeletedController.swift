@@ -6,7 +6,7 @@ extension User {
         func boot(routes: RoutesBuilder) throws {
             let users = routes.grouped("deleted")
             users.get(use: index)
-            
+
             let user = users.grouped(User.EnsureDeletedMiddleware()).grouped(":id")
             user.get(use: show)
             user.post(use: restore)
@@ -20,7 +20,7 @@ extension User {
                 .all()
                 .map { try $0.response() }
         }
-        
+
         func show(req: Request) async throws -> User.Response {
             return try await User.query(on: req.db)
                 .withDeleted()
@@ -29,7 +29,7 @@ extension User {
                 .first()!
                 .response()
         }
-        
+
         func restore(req: Request) async throws -> HTTPStatus {
             try await User.query(on: req.db)
                 .withDeleted()
@@ -39,7 +39,7 @@ extension User {
                 .restore(on: req.db, by: User.system(on: req.db))
             return .noContent
         }
-        
+
         func destroy(req: Request) async throws -> HTTPStatus {
             try await User.query(on: req.db)
                 .withDeleted()
