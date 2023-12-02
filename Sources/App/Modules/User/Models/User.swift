@@ -1,7 +1,18 @@
 import Fluent
-import Vapor
 
 final class User: Model {
+    enum Errors: String, Error {
+        case systemNotExist = "System user does not exist"
+        case passwordNotMatch = "Passwords did not match"
+        case alreadyExists = "User already exists"
+        case notExists = "User does not exists"
+        case invalidUserId = "Invaid user id"
+    }
+
+    enum Names: String {
+        case system
+    }
+
     static let schema = "users"
 
     @ID(key: .id)
@@ -16,42 +27,38 @@ final class User: Model {
     @Field(key: "password")
     var password: String
 
-    @Parent(key: "role_id")
-    var role: Role
-
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
-    @Parent(key: "created_by_id")
-    var createdBy: User
-    @Children(for: \.$createdBy)
-    var usersCreated: [User]
-
     @Timestamp(key: "updated_at", on: .update)
     var updatedAt: Date?
-    @Parent(key: "updated_by_id")
-    var updatedBy: User
-    @Children(for: \.$updatedBy)
-    var usersUpdated: [User]
-
     @Timestamp(key: "deleted_at", on: .delete)
     var deletedAt: Date?
+
+    @Parent(key: "created_by_id")
+    var createdBy: User
+    @Parent(key: "updated_by_id")
+    var updatedBy: User
     @OptionalParent(key: "deleted_by_id")
     var deletedBy: User?
+
+    @Children(for: \.$createdBy)
+    var usersCreated: [User]
+    @Children(for: \.$updatedBy)
+    var usersUpdated: [User]
     @Children(for: \.$deletedBy)
     var usersDeleted: [User]
 
     var isSystem: Bool {
-        name == "system"
+        name == Names.system.rawValue
     }
 
     init() {}
 
-    init(id: UUID? = nil, name: String, email: String, password: String, role: Role) {
+    init(id: UUID? = nil, name: String, email: String, password: String) throws {
         self.id = id
         self.name = name
         self.email = email
         self.password = password
-        self.$role.id = role.id!
     }
 
     func exists(on db: Database) async throws -> Bool {
@@ -62,20 +69,22 @@ final class User: Model {
     }
 
     func create(on db: Database, by: User) async throws {
-        $createdBy.id = by.id!
-        $updatedBy.id = by.id!
+        $createdBy.id = try by.requireID()
+        $updatedBy.id = try by.requireID()
         try await create(on: db)
     }
 
     func update(on db: Database, by: User) async throws {
-        $updatedBy.id = by.id!
+        $updatedBy.id = try by.requireID()
         try await update(on: db)
     }
 
-    func delete(on db: Database, by: User) async throws {
-        $deletedBy.id = by.id
-        try await update(on: db)
-        try await delete(on: db)
+    func delete(force: Bool = false, on db: Database, by: User) async throws {
+        if !force {
+            $deletedBy.id = try by.requireID()
+            try await update(on: db)
+        }
+        try await delete(force: force, on: db)
     }
 
     func restore(on db: Database, by: User) async throws {
@@ -84,11 +93,16 @@ final class User: Model {
         try await restore(on: db)
     }
 
-    static func system(on db: Database) async throws -> Self {
-        try await query(on: db)
-            .join(Role.self, on: \User.$role.$id == \Role.$id)
-            .filter(User.self, \.$name == "system")
-            .filter(Role.self, \.$name == "system")
-            .first()!
+    static func system(on db: Database) async throws -> User {
+        guard let system = try await User.query(on: db)
+            .field(\.$id)
+            .field(\.$name)
+            .filter(\.$name == Names.system.rawValue)
+            .first()
+        else {
+            throw Errors.systemNotExist
+        }
+
+        return system
     }
 }

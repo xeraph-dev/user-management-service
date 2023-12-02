@@ -1,25 +1,25 @@
 import Fluent
 import Vapor
 
-extension User {
+extension Service {
     struct EnsureDeletedMiddleware: AsyncMiddleware {
         func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Vapor.Response {
             guard let id: UUID = request.parameters.get("id") else {
-                throw Abort(.badRequest, reason: Errors.invalidUserId.rawValue)
+                throw Abort(.badRequest, reason: "invalid service id")
             }
             
-            guard let user = try await query(on: request.db)
+            guard let service = try await Service.query(on: request.db)
                 .withDeleted()
                 .field(\.$name)
                 .filter(\.$id == id)
                 .filter(\.$deletedAt != nil)
                 .first()
             else {
-                throw Abort(.notFound, reason: Errors.notExists.rawValue)
+                throw Abort(.notFound)
             }
             
-            if user.isSystem {
-                throw Abort(.notFound, reason: Errors.notExists.rawValue)
+            if service.isSystem {
+                throw Abort(.notFound)
             }
             
             return try await next.respond(to: request)

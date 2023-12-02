@@ -17,14 +17,21 @@ public func configure(_ app: Application) async throws {
     )), as: .psql)
 
     app.migrations.add(User.CreateMigration())
-    app.migrations.add(Role.CreateMigration())
-
-    try await app.autoMigrate()
+    app.migrations.add(User.InsertSystemMigration())
+    app.migrations.add(User.AddModifiedByReferencesMigration())
+    app.migrations.add(Service.CreateMigration())
+    app.migrations.add(Service.InsertSystemMigration())
+    app.migrations.add(Service.User.CreateMigration())
+    app.migrations.add(Service.User.AddSystemUserToSystemMigration())
+//    app.migrations.add(Role.CreateMigration())
+//    app.migrations.add(Role.InsertSystemMigration())
+//    app.migrations.add(Role.AddReferenceToUserMigration())
 
     app.views.use(.leaf)
 
     let api = app.routes.grouped("api")
     let v1 = api.grouped("v1")
     try v1.register(collection: User.Controller())
-    try v1.register(collection: Role.Controller())
+//    try v1.register(collection: Service.Controller())
+//    try v1.register(collection: Role.Controller())
 }
