@@ -1,4 +1,5 @@
 import Fluent
+import Vapor
 
 final class Service: Model {
     static let schema = "services"
@@ -23,6 +24,9 @@ final class Service: Model {
     var deletedAt: Date?
     @OptionalParent(key: "deleted_by_id")
     var deletedBy: App.User?
+
+    @Siblings(through: Service.User.self, from: \.$service, to: \.$user)
+    var users: [App.User]
 
     var isSystem: Bool {
         name == "system"

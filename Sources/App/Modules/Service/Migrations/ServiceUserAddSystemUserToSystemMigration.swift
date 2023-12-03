@@ -20,10 +20,6 @@ extension Service.User {
         }
 
         func revert(on database: Database) async throws {
-            guard let system = try await User.query(on: database).field(\.$id).filter(\.$name == "system").first() else {
-                throw User.Errors.systemNotExist
-            }
-
             guard let serviceUser = try await Service.User.query(on: database)
                 .field(\.$id)
                 .join(Service.self, on: \Service.User.$service.$id == \Service.$id)
@@ -35,7 +31,7 @@ extension Service.User {
                 throw Service.User.Errors.notExists("system", "system")
             }
 
-            try await serviceUser.delete(force: true, on: database, by: system)
+            try await serviceUser.delete(force: true, on: database)
         }
     }
 }

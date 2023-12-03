@@ -32,6 +32,6 @@ public func configure(_ app: Application) async throws {
     let api = app.routes.grouped("api")
     let v1 = api.grouped("v1")
     try v1.register(collection: User.Controller())
-//    try v1.register(collection: Service.Controller())
+    try v1.register(collection: Service.Controller())
 //    try v1.register(collection: Role.Controller())
 }

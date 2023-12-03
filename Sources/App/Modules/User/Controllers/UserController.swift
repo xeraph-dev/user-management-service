@@ -4,16 +4,15 @@ import Vapor
 extension User {
     struct Controller: RouteCollection {
         func boot(routes: RoutesBuilder) throws {
-            let users = routes.grouped("users")
+            let users = routes.grouped(EnsureAdminMiddleware()).grouped("users")
             users.get(use: index)
             users.post(use: create)
+            try users.register(collection: DeletedController())
 
-            let user = users.grouped(EnsureExistsMiddleware()).grouped(":id")
+            let user = users.grouped(EnsureMiddleware()).grouped(":user_id")
             user.get(use: show)
             user.patch(use: update)
             user.delete(use: delete)
-
-            try users.register(collection: DeletedController())
         }
 
         func index(req: Request) async throws -> [Response] {
@@ -28,43 +27,35 @@ extension User {
 
             let create = try req.content.decode(Create.self)
             guard create.password == create.confirmPassword else {
-                throw Abort(.badRequest, reason: Errors.passwordNotMatch.rawValue)
+                throw Abort(.badRequest)
             }
 
             let user = try create.user()
             if try await user.exists(on: req.db) {
-                throw Abort(.conflict, reason: Errors.alreadyExists.rawValue)
+                throw Abort(.conflict)
             }
 
-            let system = try await system(on: req.db)
-            try await user.create(on: req.db, by: system)
+            try await user.create(on: req.db, by: req.admin)
             return try user.response()
         }
 
         func show(req: Request) async throws -> Response {
-            let id: UUID = req.parameters.get("id")!
-            return try await find(id, on: req.db)!.response()
+            try req.user.response()
         }
 
-        func update(req: Request) async throws -> HTTPStatus {
+        func update(req: Request) async throws {
             try Update.validate(content: req)
 
             let update = try req.content.decode(Update.self)
             guard update.password == update.confirmPassword else {
-                throw Abort(.badRequest, reason: Errors.passwordNotMatch.rawValue)
+                throw Abort(.badRequest)
             }
 
-            let id: UUID = req.parameters.get("id")!
-            let system = try await system(on: req.db)
-            try await find(id, on: req.db)!.update(on: req.db, by: system, update: update)
-            return .noContent
+            try await req.user.update(on: req.db, by: req.admin, update: update)
         }
 
-        func delete(req: Request) async throws -> HTTPStatus {
-            let id: UUID = req.parameters.get("id")!
-            let system = try await system(on: req.db)
-            try await find(id, on: req.db)!.delete(on: req.db, by: system)
-            return .noContent
+        func delete(req: Request) async throws {
+            try await req.user.delete(on: req.db, by: req.admin)
         }
     }
 }

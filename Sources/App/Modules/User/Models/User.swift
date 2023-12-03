@@ -1,4 +1,5 @@
 import Fluent
+import Vapor
 
 final class User: Model {
     enum Errors: String, Error {
@@ -7,6 +8,10 @@ final class User: Model {
         case alreadyExists = "User already exists"
         case notExists = "User does not exists"
         case invalidUserId = "Invaid user id"
+    }
+
+    struct StorageKey: Vapor.StorageKey {
+        typealias Value = User
     }
 
     enum Names: String {
@@ -47,6 +52,9 @@ final class User: Model {
     var usersUpdated: [User]
     @Children(for: \.$deletedBy)
     var usersDeleted: [User]
+
+    @Siblings(through: Service.User.self, from: \.$user, to: \.$service)
+    var services: [Service]
 
     var isSystem: Bool {
         name == Names.system.rawValue
