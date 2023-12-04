@@ -7,17 +7,18 @@ extension User {
             let users = routes.grouped(EnsureAdminMiddleware()).grouped("users")
             users.get(use: index)
             users.post(use: create)
-            try users.register(collection: DeletedController())
 
             let user = users.grouped(EnsureMiddleware()).grouped(":user_id")
             user.get(use: show)
             user.patch(use: update)
             user.delete(use: delete)
+
+            try users.register(collection: DeletedController())
         }
 
         func index(req: Request) async throws -> [Response] {
             try await query(on: req.db)
-                .filter(\.$name != Names.system.rawValue)
+                .filter(\.$name != "system")
                 .all()
                 .map { try $0.response() }
         }

@@ -1,11 +1,5 @@
 import Vapor
 
-extension Service {
-    struct StorageKey: Vapor.StorageKey {
-        typealias Value = Service
-    }
-}
-
 extension Request {
     var service: Service {
         get {

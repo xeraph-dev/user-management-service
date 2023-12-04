@@ -5,19 +5,18 @@ extension Role {
         var name: String { "InsertSystemRole" }
 
         func prepare(on database: Database) async throws {
-            guard let user = try await User.query(on: database).field(\.$id).filter(\.$name == "system").first() else {
-                throw User.Errors.systemNotExist
-            }
+            let service = try await Service.system(on: database)
+            let user = try await User.system(on: database)
+
             let system = Role()
             system.name = "system"
+            system.$service.id = try service.requireID()
+
             try await system.create(on: database, by: user)
         }
 
         func revert(on database: Database) async throws {
-            guard let system = try await Role.query(on: database).field(\.$id).filter(\.$name == "system").first() else {
-                throw Role.Errors.systemNotExist
-            }
-            try await system.delete(on: database)
+            try await system(on: database).delete(force: true, on: database)
         }
     }
 }

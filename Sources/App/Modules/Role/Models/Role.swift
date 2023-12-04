@@ -1,6 +1,11 @@
 import Fluent
+import Vapor
 
 final class Role: Model {
+    struct StorageKey: Vapor.StorageKey {
+        typealias Value = Role
+    }
+
     static let schema = "roles"
 
     @ID(key: .id)
@@ -70,12 +75,16 @@ final class Role: Model {
         try await restore(on: db)
     }
 
-    static func system(on db: Database) async throws -> Self {
-        try await query(on: db)
-            .join(Service.self, on: \Role.$service.$id == \Service.$id)
-            .filter(Role.self, \.$name == "system")
-            .filter(Service.self, \.$name == "system")
-            .first()!
+    static func system(on db: Database) async throws -> Role {
+        guard let system = try await Role.query(on: db)
+            .field(\.$id)
+            .filter(\.$name == "system")
+            .first()
+        else {
+            throw Errors.systemNotExist
+        }
+
+        return system
     }
 }
 

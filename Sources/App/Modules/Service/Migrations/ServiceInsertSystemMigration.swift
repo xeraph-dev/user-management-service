@@ -14,10 +14,7 @@ extension Service {
         }
 
         func revert(on database: Database) async throws {
-            guard let system = try await Service.query(on: database).field(\.$id).filter(\.$name == "system").first() else {
-                throw Service.Errors.systemNotExist
-            }
-            try await system.delete(force: true, on: database)
+            try await system(on: database).delete(force: true, on: database)
         }
     }
 }

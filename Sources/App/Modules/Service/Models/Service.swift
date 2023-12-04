@@ -2,6 +2,10 @@ import Fluent
 import Vapor
 
 final class Service: Model {
+    struct StorageKey: Vapor.StorageKey {
+        typealias Value = Service
+    }
+
     static let schema = "services"
 
     @ID(key: .id)
@@ -27,6 +31,9 @@ final class Service: Model {
 
     @Siblings(through: Service.User.self, from: \.$service, to: \.$user)
     var users: [App.User]
+
+    @Children(for: \.$service)
+    var roles: [Role]
 
     var isSystem: Bool {
         name == "system"
@@ -71,10 +78,16 @@ final class Service: Model {
         try await restore(on: db)
     }
 
-    static func system(on db: Database) async throws -> Self {
-        try await query(on: db)
+    static func system(on db: Database) async throws -> Service {
+        guard let system = try await query(on: db)
+            .field(\.$id).field(\.$name)
             .filter(\.$name == "system")
-            .first()!
+            .first()
+        else {
+            throw Errors.systemNotExist
+        }
+
+        return system
     }
 }
 

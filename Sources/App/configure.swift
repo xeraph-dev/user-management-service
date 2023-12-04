@@ -23,9 +23,10 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(Service.InsertSystemMigration())
     app.migrations.add(Service.User.CreateMigration())
     app.migrations.add(Service.User.AddSystemUserToSystemMigration())
-//    app.migrations.add(Role.CreateMigration())
-//    app.migrations.add(Role.InsertSystemMigration())
-//    app.migrations.add(Role.AddReferenceToUserMigration())
+    app.migrations.add(Role.CreateMigration())
+    app.migrations.add(Role.InsertSystemMigration())
+    app.migrations.add(Service.Role.CreateMigration())
+    app.migrations.add(Service.Role.AddSystemRoleToSystemMigration())
 
     app.views.use(.leaf)
 
@@ -33,5 +34,5 @@ public func configure(_ app: Application) async throws {
     let v1 = api.grouped("v1")
     try v1.register(collection: User.Controller())
     try v1.register(collection: Service.Controller())
-//    try v1.register(collection: Role.Controller())
+    try v1.register(collection: Role.Controller())
 }

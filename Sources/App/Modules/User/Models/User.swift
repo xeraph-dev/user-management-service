@@ -14,10 +14,6 @@ final class User: Model {
         typealias Value = User
     }
 
-    enum Names: String {
-        case system
-    }
-
     static let schema = "users"
 
     @ID(key: .id)
@@ -57,7 +53,7 @@ final class User: Model {
     var services: [Service]
 
     var isSystem: Bool {
-        name == Names.system.rawValue
+        name == "system"
     }
 
     init() {}
@@ -104,8 +100,7 @@ final class User: Model {
     static func system(on db: Database) async throws -> User {
         guard let system = try await User.query(on: db)
             .field(\.$id)
-            .field(\.$name)
-            .filter(\.$name == Names.system.rawValue)
+            .filter(\.$name == "system")
             .first()
         else {
             throw Errors.systemNotExist

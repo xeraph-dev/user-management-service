@@ -6,22 +6,14 @@ extension User {
 
         func prepare(on database: Database) async throws {
             let system = User()
-            system.name = Names.system.rawValue
+            system.name = "system"
             system.email = ""
             system.password = ""
             try await system.create(on: database)
         }
 
         func revert(on database: Database) async throws {
-            guard let system = try await query(on: database)
-                .field(\.$id)
-                .filter(\.$name == Names.system.rawValue)
-                .first()
-            else {
-                throw Errors.systemNotExist
-            }
-
-            try await system.delete(force: true, on: database, by: system)
+            try await system(on: database).delete(force: true, on: database)
         }
     }
 }
