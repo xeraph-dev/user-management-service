@@ -1,7 +1,7 @@
 import Vapor
 
 extension User {
-    struct Response: Content {
+    struct Response: Content, Equatable {
         let id: UUID
         let name: String
         let email: String

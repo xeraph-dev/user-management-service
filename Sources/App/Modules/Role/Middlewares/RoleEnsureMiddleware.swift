@@ -10,12 +10,14 @@ extension Role {
         }
 
         func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Vapor.Response {
-            guard let id: UUID = request.parameters.get("role_id") else {
+            let serviceId: Any? = request.parameters.get("service_id")
+            guard let roleId: UUID = request.parameters.get("role_id") else {
                 throw Abort(.badRequest)
             }
             
-            let builder = query(on: request.db).filter(\.$id == id)
-            let builderDeleted = builder.copy().withDeleted().filter(\.$deletedAt != nil)
+            let base = serviceId != nil ? request.service.$roles.query(on: request.db) : Role.query(on: request.db)
+            let builder = base.filter(\Role.$id == roleId)
+            let builderDeleted = builder.copy().withDeleted().filter(\Role.$deletedAt != nil)
             
             let role = try await !deleted ? builder.first() : builderDeleted.first()
             guard let role = role, !role.isSystem else {

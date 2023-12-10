@@ -4,8 +4,8 @@ extension Role {
     struct Create: Content {
         var name: String
 
-        func role() throws -> Role {
-            Role(name: name)
+        func role(service: Service) throws -> Role {
+            try Role(name: name, service: service)
         }
     }
 }

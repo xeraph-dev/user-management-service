@@ -8,8 +8,10 @@ extension Service.User {
             users.get(use: index)
             users.post(use: create)
 
-            let user = users.grouped(Service.User.EnsureMiddleware()).grouped(":user_id")
+            let user = users.grouped(User.EnsureMiddleware()).grouped(":user_id")
             user.delete(use: destroy)
+
+            try users.register(collection: Service.User.DeletedController())
         }
 
         func index(req: Request) async throws -> [User.Response] {

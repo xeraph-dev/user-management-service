@@ -7,6 +7,6 @@ extension Role {
     }
 
     func response() throws -> Role.Response {
-        try Role.Response(id: self.requireID(), name: self.name)
+        try Role.Response(id: requireID(), name: name)
     }
 }

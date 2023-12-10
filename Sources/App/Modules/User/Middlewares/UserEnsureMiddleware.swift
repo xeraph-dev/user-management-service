@@ -10,11 +10,13 @@ extension User {
         }
 
         func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Vapor.Response {
-            guard let id: UUID = request.parameters.get("user_id") else {
+            let serviceId: Any? = request.parameters.get("service_id")
+            guard let userId: UUID = request.parameters.get("user_id") else {
                 throw Abort(.badRequest)
             }
 
-            let builder = query(on: request.db).filter(\.$id == id)
+            let base = serviceId != nil ? request.service.$users.query(on: request.db) : App.User.query(on: request.db)
+            let builder = base.filter(\.$id == userId)
             let builderDeleted = builder.copy().withDeleted().filter(\.$deletedAt != nil)
 
             let user = try await !deleted ? builder.first() : builderDeleted.first()

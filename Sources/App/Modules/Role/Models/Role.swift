@@ -38,15 +38,17 @@ final class Role: Model {
 
     init() {}
 
-    init(id: UUID? = nil, name: String) {
+    init(id: UUID? = nil, name: String, service: Service) throws {
         self.id = id
         self.name = name
+        $service.id = try service.requireID()
     }
 
     func exists(on db: Database) async throws -> Bool {
         try await Role.query(on: db)
             .field(\.$id)
             .filter(\.$name == name)
+            .filter(\.$service.$id == service.requireID())
             .count() > 0
     }
 

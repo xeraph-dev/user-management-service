@@ -7,9 +7,7 @@ extension Role {
     }
 
     func update(on db: Database, by: User, update: Update) async throws {
-        if let name = update.name {
-            self.name = name
-        }
+        self.name = update.name ?? self.name
         try await self.update(on: db, by: by)
     }
 }

@@ -5,7 +5,7 @@ extension Service {
     struct Controller: RouteCollection {
         func boot(routes: RoutesBuilder) throws {
             let services = routes.grouped(App.User.EnsureAdminMiddleware()).grouped("services")
-            services.get(use: index)
+            services.grouped(App.User.EnsureSuperAdminMiddleware()).get(use: index)
             services.post(use: create)
 
             let service = services.grouped(EnsureMiddleware()).grouped(":service_id")
@@ -15,6 +15,7 @@ extension Service {
 
             try services.register(collection: DeletedController())
             try service.register(collection: User.Controller())
+            try service.register(collection: RoleController())
         }
 
         func index(req: Request) async throws -> [Response] {

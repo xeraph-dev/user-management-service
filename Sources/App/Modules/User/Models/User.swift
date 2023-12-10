@@ -58,7 +58,7 @@ final class User: Model {
 
     init() {}
 
-    init(id: UUID? = nil, name: String, email: String, password: String) throws {
+    init(id: UUID? = nil, name: String, email: String, password: String) {
         self.id = id
         self.name = name
         self.email = email
