@@ -17,7 +17,7 @@ final class UserControllerTests: TestCase {
     }
 
     func testCreate() async throws {
-        let user1 = createUserCreate()
+        let user1 = User.Create(name: "test", email: "test@test.com", password: "12345678", confirmPassword: "12345678")
 
         try app.test(.POST, "api/v1/users", beforeRequest: { req in
             try req.content.encode(user1)

@@ -15,7 +15,7 @@ extension Service.User {
         }
 
         func index(req: Request) async throws -> [User.Response] {
-            return try await req.service.$users.get(on: req.db).map { try $0.response() }
+            try await req.service.$users.get(on: req.db).map { try $0.response() }
         }
 
         func create(req: Request) async throws -> User.Response {

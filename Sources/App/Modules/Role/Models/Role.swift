@@ -48,7 +48,7 @@ final class Role: Model {
         try await Role.query(on: db)
             .field(\.$id)
             .filter(\.$name == name)
-            .filter(\.$service.$id == service.requireID())
+            .filter(\.$service.$id == $service.id)
             .count() > 0
     }
 

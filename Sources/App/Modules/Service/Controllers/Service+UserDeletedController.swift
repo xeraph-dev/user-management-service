@@ -14,6 +14,7 @@ extension Service.User {
             try await req.service.$users.query(on: req.db)
                 .withDeleted()
                 .filter(\.$deletedAt != nil)
+                .sort(\.$deletedAt, .descending)
                 .all()
                 .map { try $0.response() }
         }
